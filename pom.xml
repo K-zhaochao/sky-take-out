@@ -129,7 +129,10 @@
                 <version>0.4.8</version>
             </dependency>
 
-            <!-- ✅ 已删除重复的 knife4j 依赖 -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-aop</artifactId>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
