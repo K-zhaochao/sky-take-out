@@ -7,7 +7,11 @@ import com.aliyun.oss.OSSException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -21,12 +25,24 @@ public class AliOssUtil {
 
     /**
      * 文件上传
-     *
-     * @param bytes
-     * @param objectName
+     * @param file
      * @return
      */
-    public String upload(byte[] bytes, String objectName) {
+    public String upload(MultipartFile file) throws Throwable {
+
+        // 获取文件中的内容
+        byte[] bytes = file.getBytes();
+        // 获取文件的原始名字
+        String originalFilename = file.getOriginalFilename();
+        String objectName;
+        if (originalFilename != null) {
+            // 获取文件的后缀名
+            String substring = originalFilename.substring(originalFilename.lastIndexOf("."));
+            // 获取文件名
+            objectName = UUID.randomUUID().toString() + substring;
+        } else {
+            throw new Throwable(String.format("文件名错误: %s", originalFilename));
+        }
 
         // 创建OSSClient实例。
         OSS ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
@@ -61,8 +77,9 @@ public class AliOssUtil {
                 .append("/")
                 .append(objectName);
 
-        log.info("文件上传到:{}", stringBuilder.toString());
+        String url = stringBuilder.toString();
+        log.info("文件上传到:{}", url);
 
-        return stringBuilder.toString();
+        return url;
     }
 }
