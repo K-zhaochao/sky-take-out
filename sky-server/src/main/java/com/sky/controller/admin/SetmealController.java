@@ -36,11 +36,28 @@ public class SetmealController {
         return Result.success();
     }
 
-
+    /**
+     * 分页查询
+     * @param setmealPageQueryDTO
+     * @return
+     */
     @GetMapping("/page")
     @ApiOperation("分页查询")
     public Result<PageResult> page(SetmealPageQueryDTO setmealPageQueryDTO) {
         PageResult pageResult = setmealService.page(setmealPageQueryDTO);
         return Result.success(pageResult);
+    }
+
+    /**
+     * 批量删除套餐
+     * @param ids
+     * @return
+     */
+    @DeleteMapping
+    @ApiOperation("批量删除套餐")
+    public Result deleteByIds(@RequestParam List<Long> ids) {
+        log.info("批量删除套餐: {}", ids);
+        setmealService.deleteByIds(ids);
+        return Result.success();
     }
 }
