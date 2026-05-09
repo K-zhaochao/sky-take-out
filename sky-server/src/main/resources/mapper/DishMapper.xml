@@ -4,7 +4,7 @@
 <mapper namespace="com.sky.mapper.DishMapper">
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         insert into sky_take_out.dish(name, category_id, price, image, description, status, create_time, update_time, create_user, update_user)
-        VALUES (#{name}, #{categoryId}, #{price}, #{image}, #{description}, #{status}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})
+        VALUES (#{name}, #{categoryId}, #{price}, #{image}, #{description}, #{0}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})
     </insert>
 
     <delete id="deleteByIds">
@@ -34,8 +34,8 @@
             <if test="image!=null">d.image = #{image},</if>
             <if test="description!=null">d.description = #{description},</if>
             <if test="status!=null">d.status = #{status},</if>
-            d.update_time = #{updateTime},
-            d.update_user = #{updateUser}
+            <if test="updateTime!=null">d.update_time = #{updateTime},</if>
+            <if test="updateUser!=null">d.update_user = #{updateUser}</if>
         </set>
         where id = #{id}
     </update>

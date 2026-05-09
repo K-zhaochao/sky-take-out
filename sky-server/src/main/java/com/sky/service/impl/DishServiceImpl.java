@@ -19,11 +19,13 @@ import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -37,6 +39,8 @@ public class DishServiceImpl implements DishService {
     private SetmealDishMapper setmealDishMapper;
     @Autowired
     private SetmealMapper setmealMapper;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 新增菜品和对应的口味
@@ -96,6 +100,9 @@ public class DishServiceImpl implements DishService {
         dishMapper.deleteByIds(ids);
         // 删除菜品关联的口味数据
         dishFlavorMapper.deleteByDishIds(ids);
+
+        // 将Redis中所有的缓存清理掉
+        cleanChche("dish_*");
     }
 
     /**
@@ -141,6 +148,9 @@ public class DishServiceImpl implements DishService {
             // 向口味表插入n条数
             dishFlavorMapper.insertBatch(dishFlavors);
         }
+
+        // 将Redis中所有的缓存清理掉
+        cleanChche("dish_*");
     }
 
     /**
@@ -180,4 +190,27 @@ public class DishServiceImpl implements DishService {
         return dishVOList;
     }
 
+
+    /**
+     * 菜品起售停售
+     * @param status
+     * @param id
+     */
+    public void startOrStop(Integer status, Long id) {
+        Dish dish = Dish.builder()
+                .status(status)
+                .id(id)
+                .build();
+
+        dishMapper.update(dish);
+
+        // 将Redis中所有的缓存清理掉
+        cleanChche("dish_*");
+    }
+
+    private void cleanChche(String pattern) {
+        // 将Redis中所有的缓存清理掉
+        Set keys = redisTemplate.keys(pattern);
+        redisTemplate.delete(keys);
+    }
 }
