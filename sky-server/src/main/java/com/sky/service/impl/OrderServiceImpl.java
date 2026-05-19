@@ -16,6 +16,7 @@ import com.sky.exception.OrderBusinessException;
 import com.sky.exception.ShoppingCartBusinessException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
+import com.sky.result.Result;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
@@ -25,11 +26,14 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -267,5 +271,37 @@ public class OrderServiceImpl implements OrderService {
         orders.setCancelReason("用户取消");
         orders.setCancelTime(LocalDateTime.now());
         orderMapper.update(orders);
+    }
+
+    /**
+     * 再来一单
+     * @param id
+     */
+    public void repetitionById(Long id) {
+        // 查询当前用户ID
+        Long userId = BaseContext.getCurrentId();
+
+        // 检查是否存在该订单
+        Orders orders = orderMapper.getById(id);
+        if (orders == null) {
+            throw new  BaseException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        // 获取到订单的详细内容
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(orders.getId());
+
+        // 创建对应的购物车
+        List<ShoppingCart> shoppingCartsList = orderDetailList.stream().map(x ->{
+            ShoppingCart shoppingCart = new ShoppingCart();
+
+            BeanUtils.copyProperties(x, shoppingCart, "id");
+            shoppingCart.setCreateTime(LocalDateTime.now());
+            shoppingCart.setUserId(userId);
+
+            return shoppingCart;
+        }).toList();
+
+        // 更新购物车数据
+        shoppingCartMapper.insertBatch(shoppingCartsList);
     }
 }
