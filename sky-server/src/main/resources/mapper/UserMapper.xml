@@ -6,4 +6,12 @@
         insert into sky_take_out.user(openid, name, phone, sex, id_number, avatar, create_time)
         VALUES (#{openid}, #{name}, #{phone}, #{sex}, #{idNumber}, #{avatar}, #{createTime})
     </insert>
+    <select id="countByMap" resultType="java.lang.Integer">
+        select COUNT(user.id) from user
+        <where>
+            <if test="end != null">
+                and create_time &lt;= #{end}
+            </if>
+        </where>
+    </select>
 </mapper>
