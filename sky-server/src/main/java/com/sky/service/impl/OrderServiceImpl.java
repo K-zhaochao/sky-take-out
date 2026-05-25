@@ -33,10 +33,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -237,6 +234,15 @@ public class OrderServiceImpl implements OrderService {
 
         log.info("调用updateStatus, 用于替换微信支付更新数据库状态的问题");
         orderMapper.updateStatus(OrderStatus, OrderPaidStatus, check_out_time, orderNumber);
+
+        // 通过websocket向客户端浏览器推送消息
+        Map map = new HashMap();
+        map.put("type", 1); // 1表示来单提醒 2表示客户催单
+        map.put("orderId", user);
+        map.put("content", "订单号: " + ordersPaymentDTO.getOrderNumber());
+
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
 
         return vo;
     }
@@ -622,5 +628,28 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(orders);
+    }
+
+    /**
+     * 用户催单
+     * @param id
+     */
+    public void reminder(Long id) {
+        // 根据订单ID查询订单
+        Orders orders = orderMapper.getById(id);
+
+        // 检查订单是否为空，且订单需要为2（待接单）
+        if (orders == null || orders.getStatus().equals(Orders.TO_BE_CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        // 通过websocket向客户端浏览器推送消息
+        Map map = new HashMap();
+        map.put("type", 2); // 1表示来单提醒 2表示客户催单
+        map.put("orderId", orders.getId());
+        map.put("content", "订单号: " + orders.getNumber());
+
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
     }
 }

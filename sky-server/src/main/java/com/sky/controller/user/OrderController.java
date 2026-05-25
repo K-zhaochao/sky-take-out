@@ -11,7 +11,6 @@ import com.sky.vo.OrderVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -103,6 +102,19 @@ public class OrderController {
     public Result repetition(@PathVariable Long id) {
         log.info("再来一单: {}", id);
         orderService.repetitionById(id);
+        return Result.success();
+    }
+
+    /**
+     * 催单
+     * @param id
+     * @return
+     */
+    @GetMapping("/reminder/{id}")
+    @ApiOperation(value = "催单")
+    public Result reminder(@PathVariable Long id) {
+        log.info("用户催单: {}", id);
+        orderService.reminder(id);
         return Result.success();
     }
 }
