@@ -623,7 +623,7 @@ public class OrderServiceImpl implements OrderService {
         // 更新订单数据
         Orders orders = Orders.builder()
                 .id(ordersDB.getId())
-                .status(Orders.DELIVERY_IN_PROGRESS)
+                .status(Orders.COMPLETED)
                 .deliveryTime(LocalDateTime.now())
                 .build();
 
