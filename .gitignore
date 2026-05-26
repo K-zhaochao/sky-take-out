@@ -1,5 +1,7 @@
 **/target/
 .idea
+.github
+*log
 *.iml
 *.class
 *Test.java
