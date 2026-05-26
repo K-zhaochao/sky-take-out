@@ -1,10 +1,12 @@
 package com.sky.service.impl;
 
+import com.sky.dto.GoodsSalesDTO;
 import com.sky.entity.Orders;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
 import com.sky.vo.OrderReportVO;
+import com.sky.vo.SalesTop10ReportVO;
 import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
 import io.swagger.models.auth.In;
@@ -172,6 +174,40 @@ public class ReportServiceImpl implements ReportService {
                 .orderCompletionRate(orderCompletionRate)
                 .totalOrderCount(totalOrderCount)
                 .validOrderCount(validOrderCount)
+                .build();
+    }
+
+    /**
+     * 统计指定时间区间内的销量排名top10
+     * @param begin
+     * @param end
+     * @return
+     */
+    public SalesTop10ReportVO getSalesTop10(LocalDate begin, LocalDate end) {
+        // 封装 Map 用于查询数据
+        Map map = new HashMap();
+        LocalDateTime beginTime = LocalDateTime.of(begin, LocalTime.MIN);
+        LocalDateTime endTime = LocalDateTime.of(end, LocalTime.MAX);
+        Integer status = Orders.COMPLETED;
+        map.put("begin", beginTime);
+        map.put("end", endTime);
+        map.put("status", status);
+
+        // 查询并获取前10商品的数据
+        List<GoodsSalesDTO> goodsSalesDTOList = orderMapper.getSalesTop10(map);
+
+        // 将前10商品的名称存放至集合并转成 VO 需要的格式
+        List<String> names = goodsSalesDTOList.stream().map(GoodsSalesDTO::getName).toList();
+        String nameList = StringUtils.join(names, ",");
+
+        // 将前10商品的数量存放至集合并转成 VO 需要的格式
+        List<Integer> numbers = goodsSalesDTOList.stream().map(GoodsSalesDTO::getNumber).toList();
+        String numberList = StringUtils.join(numbers, ",");
+
+        // 封装返回结果
+        return SalesTop10ReportVO.builder()
+                .nameList(nameList)
+                .numberList(numberList)
                 .build();
     }
 
