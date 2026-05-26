@@ -4,8 +4,10 @@ import com.sky.entity.Orders;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
+import com.sky.vo.OrderReportVO;
 import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
+import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,6 +113,65 @@ public class ReportServiceImpl implements ReportService {
                 .dateList(StringUtils.join(dataList, ","))
                 .totalUserList(StringUtils.join(totalUserList, ","))
                 .newUserList(StringUtils.join(newUserList, ","))
+                .build();
+    }
+
+    /**
+     * 统计指定时间区间内的订单数据
+     * @param begin
+     * @param end
+     * @return
+     */
+    public OrderReportVO ordersStatistics(LocalDate begin, LocalDate end) {
+        List<LocalDate> dataList = getDateList(begin, end);
+
+        // 记录从begin到end每一天的订单数目
+        List<Integer> orderCountList =   new ArrayList<>();
+        // 记录从begin到end每一天的有效订单数目
+        List<Integer> validOrderCountList  =  new ArrayList<>();
+        // 记录总的订单数
+        Integer totalOrderCount = 0;
+        // 记录总的有效订单数
+        Integer validOrderCount = 0;
+
+        // 开始查询每一日的订单数目
+        for (LocalDate date : dataList) {
+            LocalDateTime beginTime = LocalDateTime.of(date, LocalTime.MIN);
+            LocalDateTime endTime = LocalDateTime.of(date, LocalTime.MAX);
+
+            Map map = new HashMap();
+            map.put("begin", beginTime);
+            map.put("end", endTime);
+
+            // 查询总的订单数目
+            Integer orderCountTemp = orderMapper.countByMap(map);
+            orderCountTemp = orderCountTemp == null ? 0 : orderCountTemp;
+            totalOrderCount = totalOrderCount + orderCountTemp;
+            orderCountList.add(orderCountTemp);
+
+            map.put("status", Orders.COMPLETED);
+
+            // 查询有效订单数
+            Integer validOrderCountTemp = orderMapper.countByMap(map);
+            validOrderCountTemp = validOrderCountTemp == null ? 0 : validOrderCountTemp;
+            validOrderCount = validOrderCount + validOrderCountTemp;
+            validOrderCountList.add(validOrderCountTemp);
+        }
+
+        Double orderCompletionRate = null;
+        try {
+            orderCompletionRate = validOrderCount.doubleValue() / totalOrderCount;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return OrderReportVO.builder()
+                .dateList(StringUtils.join(dataList, ","))
+                .orderCountList(StringUtils.join(orderCountList, ","))
+                .validOrderCountList(StringUtils.join(validOrderCountList, ","))
+                .orderCompletionRate(orderCompletionRate)
+                .totalOrderCount(totalOrderCount)
+                .validOrderCount(validOrderCount)
                 .build();
     }
 
